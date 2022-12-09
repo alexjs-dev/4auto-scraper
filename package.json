@@ -1,0 +1,14 @@
+{
+  "name": "4auto-scraper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/alexjs-dev/4auto-scraper.git",
+  "author": "Alex Dmitrijev <z-alex-z@hotmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "scrape": "node ./src/scrapers/auto24.js"
+  },
+  "dependencies": {
+    "puppeteer": "^19.4.0"
+  }
+}

@@ -82,17 +82,24 @@ const getModels = async (makeId) => {
   }
   const url = getModelApiUrl(makeId);
 
-  const filterSeries = (array) => {
-    // remove all entries that have children defined: // [label, value, children?]
-    return array.filter(({ children }) => !children);
-  };
-
-  // make api fetch
-  // result -> q.response[] -> {value, label}
-  // return result
   const response = await axios.get(url);
-  const data = response.data?.q?.response || []; // [label, value, children?]
-  return filterSeries(data);
+  const data = response.data?.q?.response || [];
+
+  function flattenData(data) {
+    return _.flatMap(data, (item) => {
+      if (item.children) {
+        return [...flattenData(item.children)];
+      }
+      return item;
+    });
+  }
+
+  const flatData = flattenData(data);
+
+  // Filter out non-leaf nodes
+  const leafNodes = flatData.filter((item) => !item.children);
+
+  return leafNodes;
 };
 
 (async () => {
@@ -109,6 +116,13 @@ const getModels = async (makeId) => {
     // Get a list of all the makes
     await page.waitForSelector(SELECTORS.MAKE_LIST);
 
+    const filterNonNumericDataValue = (item) => {
+      const dataValue = item.dataValue;
+      // dataValue "70" is a valid model id
+      // dataValue "ferrari" is not a valid model id
+      return !isNaN(dataValue);
+    };
+
     // Log them
     const makes = await page.$$eval(
       "select option",
@@ -123,18 +137,25 @@ const getModels = async (makeId) => {
       MAKES
     );
 
-    const uniqueMakes = _.uniqBy(makes, "make");
+    const uniqueMakes = _.uniqBy(makes, "dataValue").filter(
+      filterNonNumericDataValue
+    );
     console.log("count", uniqueMakes.length);
 
     // Generate JSON
     let carData = {};
 
-    for (let make of makes) {
+    for (let make of uniqueMakes) {
       const id = make.dataValue;
       const name = make.make;
       const makeData = await getModels(id); // returns [{label, value}]
 
-      carData[name] = makeData; // storing the make data into object with make name as the key
+      const existing = carData[name];
+      if (existing) {
+        carData[name] = [...existing, ...makeData];
+      } else {
+        carData[name] = makeData;
+      }
 
       console.log(`Processed: ${name}`);
 

@@ -8,7 +8,8 @@
   "scripts": {
     "scrape": "node ./src/scrapers/auto24/auto24.js",
     "scrape-models": "node ./src/scrapers/auto24/models.js",
-    "seed-models": "node ./src/seed/modelSeed.js"
+    "seed-models": "node ./src/seed/modelSeed.js",
+    "seed-locations": "node ./src/seed/locationSeed.js"
   },
   "dependencies": {
     "axios": "^1.2.1",
